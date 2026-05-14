@@ -1,0 +1,13 @@
+TUTIVI_NAME="TuTiVi"
+
+MPV_SOCKET="/tmp/tutivi-mpv-socket"
+
+DOWNLOAD_DIR="$HOME/Downloads/TuTiVi"
+
+HISTORY_FILE="$HOME/.config/tutivi/history/history.log"
+
+MAX_HEIGHT="720"
+
+OSD_DURATION="3000"
+
+KDECONNECT_DEVICE=""
