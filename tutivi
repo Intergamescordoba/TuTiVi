@@ -1,0 +1,157 @@
+#!/bin/bash
+
+# ══════════════════════════════════════════════════════════════
+#  TuTiVi Main Command
+# ══════════════════════════════════════════════════════════════
+
+source "$(dirname "$0")/core/functions.sh"
+
+COMMAND="$1"
+shift
+
+# ══════════════════════════════════════════════════════════════
+#  HELP
+# ══════════════════════════════════════════════════════════════
+
+_show_help() {
+
+    echo ""
+    echo "  📺 TuTiVi 0.1v"
+    echo ""
+    echo "  Uso:"
+    echo ""
+    echo "    tutivi play <url>"
+    echo "    tutivi add <url>"
+    echo "    tutivi stop"
+    echo "    tutivi pause"
+    echo "    tutivi next"
+    echo "    tutivi current"
+    echo "    tutivi queue"
+    echo ""
+}
+
+# ══════════════════════════════════════════════════════════════
+#  PLAY
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_play() {
+
+    local URL
+
+    URL=$(_tutivi_parse_url "$1")
+
+    [[ -z "$URL" ]] && \
+        echo "[ERROR] URL inválida." && return 1
+
+    rm -f "$MPV_SOCKET"
+
+    DISPLAY="$DISPLAY_ID" mpv --fs \
+        --input-ipc-server="$MPV_SOCKET" \
+        "$URL" &
+
+    sleep 2
+
+    _tutivi_osd "📺 TuTiVi"
+}
+
+# ══════════════════════════════════════════════════════════════
+#  ADD TO QUEUE
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_add() {
+
+    local URL
+
+    URL=$(_tutivi_parse_url "$1")
+
+    [[ -z "$URL" ]] && \
+        echo "[ERROR] URL inválida." && return 1
+
+    !_tutivi_running && \
+        echo "[ERROR] mpv no está corriendo." && return 1
+
+    _tutivi_cmd \
+        '{"command":["loadfile","'"$URL"'","append-play"]}'
+
+    _tutivi_osd "➕ Video agregado a la cola"
+}
+
+# ══════════════════════════════════════════════════════════════
+#  STOP
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_stop() {
+
+    !_tutivi_running && return 0
+
+    _tutivi_cmd '{"command":["quit"]}'
+}
+
+# ══════════════════════════════════════════════════════════════
+#  PAUSE
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_pause() {
+
+    !_tutivi_running && return 0
+
+    _tutivi_cmd '{"command":["cycle","pause"]}'
+}
+
+# ══════════════════════════════════════════════════════════════
+#  NEXT
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_next() {
+
+    !_tutivi_running && return 0
+
+    _tutivi_cmd '{"command":["playlist-next"]}'
+}
+
+# ══════════════════════════════════════════════════════════════
+#  CURRENT
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_current() {
+
+    !_tutivi_running && \
+        echo "Sin reproducción." && return 1
+
+    _tutivi_cmd '{"command":["get_property","media-title"]}'
+}
+
+# ══════════════════════════════════════════════════════════════
+#  MAIN SWITCH
+# ══════════════════════════════════════════════════════════════
+
+case "$COMMAND" in
+
+    play)
+        _tutivi_play "$1"
+        ;;
+
+    add)
+        _tutivi_add "$1"
+        ;;
+
+    stop)
+        _tutivi_stop
+        ;;
+
+    pause)
+        _tutivi_pause
+        ;;
+
+    next)
+        _tutivi_next
+        ;;
+
+    current)
+        _tutivi_current
+        ;;
+
+    *)
+        _show_help
+        ;;
+esac
