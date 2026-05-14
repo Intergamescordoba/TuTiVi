@@ -93,3 +93,25 @@ _tutivi_parse_url() {
 
     fi
 }
+
+# ══════════════════════════════════════════════════════════════
+#  Iniciar mpv
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_start_mpv() {
+
+    local URL="$1"
+
+    rm -f "$MPV_SOCKET"
+
+    DISPLAY="$DISPLAY_ID" mpv --no-config --fs \
+        --input-ipc-server="$MPV_SOCKET" \
+        --osd-playing-msg="TuTiVi Player\n${media-title}" \
+        --osd-playing-msg-duration=5000 \
+        --osd-font-size=40 \
+        --osd-align-x=center \
+        --osd-align-y=bottom \
+        --osd-margin-y=80 \
+        --ytdl-format="bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]" \
+        "$URL" &
+}

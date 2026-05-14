@@ -43,15 +43,11 @@ _tutivi_play() {
     [[ -z "$URL" ]] && \
         echo "[ERROR] URL inválida." && return 1
 
-    rm -f "$MPV_SOCKET"
-
-    DISPLAY="$DISPLAY_ID" mpv --fs \
-        --input-ipc-server="$MPV_SOCKET" \
-        "$URL" &
+_tutivi_start_mpv "$URL"
 
     sleep 2
 
-    _tutivi_osd "📺 TuTiVi"
+    _tutivi_osd "TuTiVi"
 }
 
 # ══════════════════════════════════════════════════════════════
