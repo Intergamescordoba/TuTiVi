@@ -1,13 +1,27 @@
+# ══════════════════════════════════════════════════════════════
+#  TuTiVi - Configuración ejemplo
+# ══════════════════════════════════════════════════════════════
+
 TUTIVI_NAME="TuTiVi"
 
+# Socket principal de mpv
 MPV_SOCKET="/tmp/tutivi-mpv-socket"
 
-DOWNLOAD_DIR="$HOME/Downloads/TuTiVi"
-
+# Historial
 HISTORY_FILE="$HOME/.config/tutivi/history/history.log"
 
+# Descargas futuras
+DOWNLOAD_DIR="$HOME/Downloads/TuTiVi"
+
+# Calidad máxima de reproducción
 MAX_HEIGHT="720"
 
+# OSD en pantalla
 OSD_DURATION="3000"
 
+# KDE Connect
+# Se llenará después con el ID del celular
 KDECONNECT_DEVICE=""
+
+# Display gráfico
+DISPLAY_ID=":0"
