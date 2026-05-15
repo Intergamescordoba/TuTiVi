@@ -4,7 +4,7 @@
 #  TuTiVi Main Command
 # ══════════════════════════════════════════════════════════════
 
-source "$(dirname "$0")/core/functions.sh"
+source "$HOME/.config/tutivi/core/functions.sh"
 
 COMMAND="$1"
 shift
@@ -16,17 +16,20 @@ shift
 _show_help() {
 
     echo ""
-    echo "  📺 TuTiVi 0.1v"
+    echo "   TuTiVi 0.1v By Intergames"
     echo ""
-    echo "  Uso:"
+    echo "  Ejemplos de uso:"
     echo ""
-    echo "    tutivi play <url>"
-    echo "    tutivi add <url>"
-    echo "    tutivi stop"
-    echo "    tutivi pause"
-    echo "    tutivi next"
-    echo "    tutivi current"
-    echo "    tutivi queue"
+    echo "    tutivi abrir <url>       Abre un video o lo agrega a la cola"
+    echo "    tutivi agregar <url>     Agrega un video a la cola"
+    echo "    tutivi pausa             Pausa / reanuda"
+    echo "    tutivi siguiente         Siguiente video"
+    echo "    tutivi detener           Cierra TuTiVi"
+    echo "    tutivi actual            Muestra información actual"
+    echo "    tutivi titulo            Muestra título en pantalla"
+    echo "    tutivi estado            Estado del reproductor"
+    echo ""
+    echo ""    
     echo ""
 }
 
@@ -43,11 +46,60 @@ _tutivi_play() {
     [[ -z "$URL" ]] && \
         echo "[ERROR] URL inválida." && return 1
 
-_tutivi_start_mpv "$URL"
+    if _tutivi_running; then
+        _tutivi_add "$URL"
+        return 0
+    fi
+
+    _tutivi_start_mpv "$URL"
 
     sleep 2
 
-    _tutivi_osd "TuTiVi"
+    VIDEO_TITLE=""
+
+    for ((i=1; i<=15; i++)); do
+
+        VIDEO_TITLE=$(
+            _tutivi_cmd '{"command":["get_property","media-title"]}' | \
+            python3 -c '
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    title = d.get("data", "")
+    print(title.strip() if isinstance(title, str) else "")
+except Exception:
+    print("")
+'
+        )
+
+        # Debuug del titulo
+        #echo "DEBUG VIDEO_TITLE=[$VIDEO_TITLE]"
+
+        # Si YA es válido
+        if [[ -n "$VIDEO_TITLE" \
+           && "$VIDEO_TITLE" != "?" \
+           && "$VIDEO_TITLE" != "title" \
+           && "$VIDEO_TITLE" != *"watch?v="* \
+           && "$VIDEO_TITLE" != http://* \
+           && "$VIDEO_TITLE" != https://* ]]; then
+
+        _tutivi_osd $'TuTiVi Player:\n'"$VIDEO_TITLE" 5000
+            break
+        fi
+
+        sleep 1
+    done
+
+    # Si nunca encontró título válido
+    if [[ -z "$VIDEO_TITLE" \
+       || "$VIDEO_TITLE" == "?" \
+       || "$VIDEO_TITLE" == "title" \
+       || "$VIDEO_TITLE" == *"watch?v="* \
+       || "$VIDEO_TITLE" == http://* \
+       || "$VIDEO_TITLE" == https://* ]]; then
+
+        _tutivi_osd "TuTiVi Player - Sin título" 5000
+    fi
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -63,13 +115,13 @@ _tutivi_add() {
     [[ -z "$URL" ]] && \
         echo "[ERROR] URL inválida." && return 1
 
-    !_tutivi_running && \
+    ! _tutivi_running && \
         echo "[ERROR] mpv no está corriendo." && return 1
 
     _tutivi_cmd \
-        '{"command":["loadfile","'"$URL"'","append-play"]}'
+        '{"command":["loadfile","'"$URL"'","append-play"]}' >/dev/null
 
-    _tutivi_osd "➕ Video agregado a la cola"
+    _tutivi_osd "TuTiVi - Video agregado a la cola" 3000
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -78,9 +130,9 @@ _tutivi_add() {
 
 _tutivi_stop() {
 
-    !_tutivi_running && return 0
+    ! _tutivi_running && return 0
 
-    _tutivi_cmd '{"command":["quit"]}'
+    _tutivi_cmd '{"command":["quit"]}' >/dev/null
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -89,9 +141,9 @@ _tutivi_stop() {
 
 _tutivi_pause() {
 
-    !_tutivi_running && return 0
+    ! _tutivi_running && return 0
 
-    _tutivi_cmd '{"command":["cycle","pause"]}'
+    _tutivi_cmd '{"command":["cycle","pause"]}' >/dev/null
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -100,9 +152,13 @@ _tutivi_pause() {
 
 _tutivi_next() {
 
-    !_tutivi_running && return 0
+    ! _tutivi_running && return 0
 
-    _tutivi_cmd '{"command":["playlist-next"]}'
+    _tutivi_cmd '{"command":["playlist-next"]}' >/dev/null
+
+    sleep 7
+
+    _tutivi_title_osd
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -111,40 +167,62 @@ _tutivi_next() {
 
 _tutivi_current() {
 
-    !_tutivi_running && \
+    ! _tutivi_running && \
         echo "Sin reproducción." && return 1
 
-    _tutivi_cmd '{"command":["get_property","media-title"]}'
+    _tutivi_cmd '{"command":["get_property","media-title"]}' | \
+        python3 -c '
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    title = d.get("data", "")
+    print(title if title else "Sin título")
+except Exception:
+    print("Sin título")
+'
 }
-
 # ══════════════════════════════════════════════════════════════
 #  MAIN SWITCH
 # ══════════════════════════════════════════════════════════════
 
 case "$COMMAND" in
 
-    play)
+    play|abrir|reproducir)
         _tutivi_play "$1"
         ;;
 
-    add)
+    add|agregar)
         _tutivi_add "$1"
         ;;
 
-    stop)
+    running|estado)
+        if _tutivi_running; then
+            echo "running"
+            exit 0
+        else
+            echo "stopped"
+            exit 1
+        fi
+        ;;
+
+    stop|detener)
         _tutivi_stop
         ;;
 
-    pause)
+    pause|pausa)
         _tutivi_pause
         ;;
 
-    next)
+    next|siguiente)
         _tutivi_next
         ;;
 
-    current)
+    current|actual)
         _tutivi_current
+        ;;
+
+    titulo|title)
+        _tutivi_title_osd
         ;;
 
     *)

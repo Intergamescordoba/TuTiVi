@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# ══════════════════════════════════════════════════════════════
+#  TuTiVi KDE Connect Handler
+# ══════════════════════════════════════════════════════════════
+
+export HOME="${HOME:-/home/$USER}"
+export DISPLAY="${DISPLAY:-:0}"
+
+URL="$1"
+
+if [[ -z "$URL" ]]; then
+    tutivi titulo
+    exit 0
+fi
+
+# Si TuTiVi ya está reproduciendo, agrega a cola.
+# Si no, abre/reproduce.
+if tutivi estado >/dev/null 2>&1; then
+    tutivi agregar "$URL"
+else
+    tutivi abrir "$URL"
+fi
