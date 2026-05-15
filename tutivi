@@ -130,9 +130,50 @@ _tutivi_add() {
 
 _tutivi_stop() {
 
-    ! _tutivi_running && return 0
+    local MPV_PID=""
 
-    _tutivi_cmd '{"command":["quit"]}' >/dev/null
+    # Intentar obtener PID desde socket
+    if _tutivi_socket_alive; then
+        MPV_PID=$(
+            _tutivi_cmd '{"command":["get_property","pid"]}' | \
+            python3 -c '
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    print(d.get("data", ""))
+except Exception:
+    print("")
+'
+        )
+
+        _tutivi_cmd '{"command":["quit"]}' >/dev/null 2>&1
+        sleep 1
+    fi
+
+    rm -f "$MPV_SOCKET"
+
+    # Si tenemos PID, forzar cierre si sigue vivo
+    if [[ -n "$MPV_PID" ]] && kill -0 "$MPV_PID" 2>/dev/null; then
+        kill "$MPV_PID" 2>/dev/null
+        sleep 1
+    fi
+
+    if [[ -n "$MPV_PID" ]] && kill -0 "$MPV_PID" 2>/dev/null; then
+        kill -9 "$MPV_PID" 2>/dev/null
+    fi
+
+    # Limpieza extra: solo procesos mpv con socket TuTiVi
+    while read -r PID CMD; do
+        [[ "$CMD" == *"input-ipc-server=$MPV_SOCKET"* ]] && kill "$PID" 2>/dev/null
+    done < <(pgrep -a mpv)
+
+    sleep 1
+
+    while read -r PID CMD; do
+        [[ "$CMD" == *"input-ipc-server=$MPV_SOCKET"* ]] && kill -9 "$PID" 2>/dev/null
+    done < <(pgrep -a mpv)
+
+    echo "TuTiVi detenido."
 }
 
 # ══════════════════════════════════════════════════════════════
