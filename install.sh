@@ -23,6 +23,7 @@ REQUIRED_PACKAGES=(
     xclip
     kdeconnect
     ffmpeg
+    mpv-mpris
 )
 
 for pkg in "${REQUIRED_PACKAGES[@]}"; do

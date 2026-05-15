@@ -161,9 +161,16 @@ _tutivi_start_mpv() {
     local URL="$1"
 
     rm -f "$MPV_SOCKET"
+if [[ -f "$MPRIS_SCRIPT" ]]; then
+    MPRIS_OPTION="--script=$MPRIS_SCRIPT"
+else
+    MPRIS_OPTION=""
+fi
+
 
     DISPLAY="$DISPLAY_ID" mpv --no-config --fs \
         --input-ipc-server="$MPV_SOCKET" \
+        --script=/usr/lib/mpv-mpris/mpris.so \
         --osd-playing-msg-duration=5000 \
         --osd-font-size=40 \
         --osd-align-x=center \
