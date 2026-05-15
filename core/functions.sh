@@ -70,7 +70,7 @@ _tutivi_osd() {
 
     [[ ! -S "$MPV_SOCKET" ]] && return 0
 
-    python3 - "$MESSAGE" "$DURATION" "$MPV_SOCKET" <<'PY'
+    python3 - "$MESSAGE" "$DURATION" "$MPV_SOCKET" >/dev/null 2>&1 <<'PY'
 import sys
 import json
 import socket
@@ -85,16 +85,21 @@ payload = {
 
 data = json.dumps(payload).encode("utf-8") + b"\n"
 
-sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-sock.connect(socket_path)
-sock.sendall(data)
-
 try:
-    sock.recv(4096)
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    sock.settimeout(1)
+    sock.connect(socket_path)
+    sock.sendall(data)
+
+    try:
+        sock.recv(4096)
+    except Exception:
+        pass
+
+    sock.close()
+
 except Exception:
     pass
-
-sock.close()
 PY
 }
 

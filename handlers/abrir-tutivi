@@ -1,0 +1,8 @@
+#!/bin/bash
+
+export HOME=/home/intergames
+export DISPLAY=:0
+export XAUTHORITY=/home/intergames/.Xauthority
+export PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+/usr/local/bin/enlazador-tutivi
