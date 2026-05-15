@@ -39,6 +39,7 @@ echo "[5/5] Instalando comando global..."
 
 sudo ln -sf "$(pwd)/tutivi" /usr/local/bin/tutivi
 sudo ln -sf "$(pwd)/handlers/tutivi-handler" /usr/local/bin/tutivi-handler
+sudo ln -sf "$(pwd)/handlers/tutivi-handler" /usr/local/bin/enlazador-tutivi
 
 
 chmod +x tutivi
