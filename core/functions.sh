@@ -4,15 +4,50 @@
 #  TuTiVi Core Functions
 # ══════════════════════════════════════════════════════════════
 
-# Ruta base de configuración
+# ══════════════════════════════════════════════════════════════
+#  Configuración TuTiVi
+# ══════════════════════════════════════════════════════════════
+
 CONFIG_DIR="$HOME/.config/tutivi"
 
-# Cargar configuración
-if [[ -f "$CONFIG_DIR/tutivi.conf" ]]; then
-    source "$CONFIG_DIR/tutivi.conf"
+USER_CONFIG="$CONFIG_DIR/tutivi.conf"
+
+DEFAULT_CONFIG="$(dirname "${BASH_SOURCE[0]}")/../config/tutivi.conf.example"
+
+# Cargar configuración del usuario si existe
+# Si no existe, usar valores por defecto del proyecto
+
+if [[ -f "$USER_CONFIG" ]]; then
+    source "$USER_CONFIG"
 else
-    source "$(dirname "${BASH_SOURCE[0]}")/../config/tutivi.conf.example"
+    source "$DEFAULT_CONFIG"
 fi
+
+# ══════════════════════════════════════════════════════════════
+#  Valores por defecto de seguridad
+# ══════════════════════════════════════════════════════════════
+
+MAX_HEIGHT="${MAX_HEIGHT:-720}"
+
+TUTIVI_FORMAT_MODE="${TUTIVI_FORMAT_MODE:-compatible}"
+
+TUTIVI_HWDEC="${TUTIVI_HWDEC:-no}"
+
+TUTIVI_AUDIO_DEVICE="${TUTIVI_AUDIO_DEVICE:-auto}"
+
+TUTIVI_INITIAL_VOLUME="${TUTIVI_INITIAL_VOLUME:-70}"
+
+OSD_DURATION="${OSD_DURATION:-3000}"
+
+OSD_FONT_SIZE="${OSD_FONT_SIZE:-40}"
+
+OSD_MARGIN_Y="${OSD_MARGIN_Y:-80}"
+
+TUTIVI_YTDLP_CLIENT="${TUTIVI_YTDLP_CLIENT:-android}"
+
+MPV_SOCKET="${MPV_SOCKET:-/tmp/tutivi-mpv-socket}"
+
+DISPLAY_ID="${DISPLAY_ID:-:0}"
 
 # ══════════════════════════════════════════════════════════════
 #  Comprobacion de arranque limpio en MPV 
