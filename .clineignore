@@ -1,0 +1,20 @@
+# Archivos de sistema y logs
+*.log
+*.swp
+*~
+.DS_Store
+
+# Carpetas de caché y sistemas de control
+__pycache__/
+.git/
+.venv/
+node_modules/
+
+# Archivos pesados o innecesarios para la IA
+mpv/*.conf
+docs/
+install.sh
+uninstall.sh
+
+# Solo deja fuera lo que NO necesita leer para programar el Core
+# Si necesitas que lea algo de aquí, quítale el comentario (el #)

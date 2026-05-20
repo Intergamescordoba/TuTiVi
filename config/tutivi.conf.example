@@ -2,26 +2,119 @@
 #  TuTiVi - Configuración ejemplo
 # ══════════════════════════════════════════════════════════════
 
+# ------------------------------------------------------------
+# Identidad
+# ------------------------------------------------------------
+
 TUTIVI_NAME="TuTiVi"
 
-# Socket principal de mpv
-MPV_SOCKET="/tmp/tutivi-mpv-socket"
+# ------------------------------------------------------------
+# Rutas base
+# ------------------------------------------------------------
 
-# Historial
+TUTIVI_CONFIG_DIR="$HOME/.config/tutivi"
+TUTIVI_CACHE_DIR="$HOME/.cache/tutivi"
+TUTIVI_LOG_DIR="$HOME/.cache/tutivi/logs"
+
 HISTORY_FILE="$HOME/.config/tutivi/history/history.log"
-
-# Descargas futuras
 DOWNLOAD_DIR="$HOME/Downloads/TuTiVi"
 
-# Calidad máxima de reproducción
+# ------------------------------------------------------------
+# Display gráfico
+# ------------------------------------------------------------
+
+DISPLAY_ID=":0"
+
+# ------------------------------------------------------------
+# MPV / Player
+# ------------------------------------------------------------
+
+MPV_SOCKET="/tmp/tutivi-mpv-socket"
+
+# classic = abrir mpv por cada video
+# idle    = futuro: mpv persistente en modo espera
+TUTIVI_PLAYER_MODE="classic"
+
+# Pantalla completa
+TUTIVI_FULLSCREEN="yes"
+
+# Imagen de reposo futura para mpv idle
+TUTIVI_SPLASH_IMAGE="$HOME/.config/tutivi/assets/splash.png"
+
+# ------------------------------------------------------------
+# Calidad / formato
+# ------------------------------------------------------------
+
+# Altura máxima del video: 480, 720, 1080
 MAX_HEIGHT="720"
 
-# OSD en pantalla
-OSD_DURATION="3000"
+# compatible = intenta mp4/m4a primero
+# flexible   = permite más formatos si mp4 no está disponible
+TUTIVI_FORMAT_MODE="compatible"
 
-# KDE Connect
-# Se llenará después con el ID del celular
+# ------------------------------------------------------------
+# yt-dlp
+# ------------------------------------------------------------
+
+# Cliente preferido para YouTube cuando se use yt-dlp
+# Ejemplos: android, web, ios
+TUTIVI_YTDLP_CLIENT="android"
+
+# ------------------------------------------------------------
+# Aceleración de video
+# ------------------------------------------------------------
+
+# no        = sin aceleración
+# auto-safe = automático seguro
+# vaapi     = Intel/AMD compatible VAAPI
+TUTIVI_HWDEC="no"
+
+# ------------------------------------------------------------
+# Caché mpv
+# ------------------------------------------------------------
+
+TUTIVI_CACHE="yes"
+TUTIVI_DEMUXER_MAX_BYTES="64MiB"
+TUTIVI_DEMUXER_MAX_BACK_BYTES="16MiB"
+
+# ------------------------------------------------------------
+# Audio
+# ------------------------------------------------------------
+
+# auto = salida por defecto del sistema
+# ejemplo: pulse/alsa_output.pci-0000_00_14.2.analog-stereo
+TUTIVI_AUDIO_DEVICE="auto"
+
+# Volumen interno inicial de mpv
+TUTIVI_INITIAL_VOLUME="70"
+
+# Buffer de audio para hardware viejo
+TUTIVI_AUDIO_BUFFER="0.3"
+
+# ------------------------------------------------------------
+# OSD en pantalla
+# ------------------------------------------------------------
+
+OSD_DURATION="3000"
+OSD_FONT_SIZE="40"
+OSD_MARGIN_Y="80"
+
+# ------------------------------------------------------------
+# MPRIS
+# ------------------------------------------------------------
+
+MPRIS_SCRIPT="/usr/lib/mpv-mpris/mpris.so"
+
+# ------------------------------------------------------------
+# KDE Connect opcional
+# ------------------------------------------------------------
+
 KDECONNECT_DEVICE=""
 
-# Display gráfico
-DISPLAY_ID=":0"
+# ------------------------------------------------------------
+# API web futura
+# ------------------------------------------------------------
+
+TUTIVI_API_HOST="0.0.0.0"
+TUTIVI_API_PORT="8765"
+TUTIVI_API_TOKEN=""

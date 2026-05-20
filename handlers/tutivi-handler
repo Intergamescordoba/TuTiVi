@@ -11,7 +11,7 @@ export DISPLAY="${DISPLAY:-:0}"
 URL="$1"
 
 if [[ -z "$URL" ]]; then
-    URL=$(xclip -selection clipboard -o 2>/dev/null)
+    URL=$(xclip -selection clipboard -o )
 fi
 
 URL="$(echo "$URL" | xargs)"

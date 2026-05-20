@@ -32,7 +32,7 @@ _tutivi_current_path() {
     [[ ! -S "$MPV_SOCKET" ]] && return 1
 
     echo '{"command":["get_property","path"]}' \
-        | socat - "$MPV_SOCKET" 2>/dev/null \
+        | socat - "$MPV_SOCKET" \
         | python3 -c '
 import sys, json
 try:
@@ -56,7 +56,7 @@ _tutivi_has_media() {
 # ══════════════════════════════════════════════════════════════
 
 _tutivi_cmd() {
-    echo "$1" | socat - "$MPV_SOCKET" 2>/dev/null
+    echo "$1" | socat - "$MPV_SOCKET"
 }
 
 # ══════════════════════════════════════════════════════════════
