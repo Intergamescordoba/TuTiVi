@@ -49,6 +49,12 @@ MPV_SOCKET="${MPV_SOCKET:-/tmp/tutivi-mpv-socket}"
 
 DISPLAY_ID="${DISPLAY_ID:-:0}"
 
+TUTIVI_DEBUG_WINDOW="${TUTIVI_DEBUG_WINDOW:-no}"
+
+TUTIVI_DEBUG_WINDOW_TIME="${TUTIVI_DEBUG_WINDOW_TIME:-30}"
+
+TUTIVI_LOG_FILE="${TUTIVI_LOG_FILE:-$HOME/.cache/tutivi/logs/mpv.log}"
+
 # ══════════════════════════════════════════════════════════════
 #  Comprobacion de arranque limpio en MPV 
 # ══════════════════════════════════════════════════════════════
@@ -188,7 +194,37 @@ _tutivi_parse_url() {
 }
 
 # ══════════════════════════════════════════════════════════════
-#  Iniciar mpv
+#  TuTiVi Debug Window
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_debug_window() {
+
+    [[ "$TUTIVI_DEBUG_WINDOW" != "yes" ]] && return 0
+
+    command -v xterm >/dev/null 2>&1 || return 0
+
+    mkdir -p "$(dirname "$TUTIVI_LOG_FILE")"
+
+    DISPLAY="$DISPLAY_ID" xterm \
+        -T "TuTiVi Debug" \
+        -geometry 120x28+40+40 \
+        -fa "Monospace" \
+        -fs 12 \
+        -bg black \
+        -fg white \
+        -e bash -lc "
+            echo '════════════════════════════════════════════════════'
+            echo ' TuTiVi Debug by Intergames'
+            echo '════════════════════════════════════════════════════'
+            echo
+            echo 'URL recibida / salida de mpv y yt-dlp:'
+            echo
+            timeout ${TUTIVI_DEBUG_WINDOW_TIME}s tail -n +1 -f '$TUTIVI_LOG_FILE'
+        " &
+}
+
+# ══════════════════════════════════════════════════════════════
+#  Configuración de formato de yt-dlp según el modo seleccionado
 # ══════════════════════════════════════════════════════════════
 
 _tutivi_build_format() {
@@ -215,30 +251,51 @@ _tutivi_build_format() {
     esac
 }
 
+# ══════════════════════════════════════════════════════════════
+#  Iniciar mpv
+# ══════════════════════════════════════════════════════════════
+
 _tutivi_start_mpv() {
 
     local URL="$1"
+    local MPRIS_OPTION=""
 
     _tutivi_build_format
 
     rm -f "$MPV_SOCKET"
-if [[ -f "$MPRIS_SCRIPT" ]]; then
-    MPRIS_OPTION="--script=$MPRIS_SCRIPT"
-else
-    MPRIS_OPTION=""
-fi
 
+    if [[ -f "$MPRIS_SCRIPT" ]]; then
+        MPRIS_OPTION="--script=$MPRIS_SCRIPT"
+    fi
+
+    mkdir -p "$(dirname "$TUTIVI_LOG_FILE")"
+    : > "$TUTIVI_LOG_FILE"
+
+    {
+        echo "════════════════════════════════════════════════════"
+        echo "TuTiVi Debug"
+        echo "Fecha: $(date '+%F %T')"
+        echo "URL: $URL"
+        echo "Formato: $YTDL_FORMAT"
+        echo "Display: $DISPLAY_ID"
+        echo "Socket: $MPV_SOCKET"
+        echo "════════════════════════════════════════════════════"
+        echo
+    } >> "$TUTIVI_LOG_FILE"
+
+    _tutivi_debug_window
 
     DISPLAY="$DISPLAY_ID" mpv --no-config --fs \
         --input-ipc-server="$MPV_SOCKET" \
         $MPRIS_OPTION \
         --osd-playing-msg-duration=5000 \
-        --osd-font-size=40 \
+        --osd-font-size="$OSD_FONT_SIZE" \
         --osd-align-x=center \
         --osd-align-y=bottom \
-        --osd-margin-y=80 \
+        --osd-margin-y="$OSD_MARGIN_Y" \
+        --volume="$TUTIVI_INITIAL_VOLUME" \
         --ytdl-format="$YTDL_FORMAT" \
-        "$URL" >/dev/null 2>&1 &
+        "$URL" >> "$TUTIVI_LOG_FILE" 2>&1 &
 }
 
 # ══════════════════════════════════════════════════════════════

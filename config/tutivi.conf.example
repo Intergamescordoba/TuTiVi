@@ -46,7 +46,7 @@ TUTIVI_SPLASH_IMAGE="$HOME/.config/tutivi/assets/splash.png"
 # ------------------------------------------------------------
 
 # Altura máxima del video: 480, 720, 1080
-MAX_HEIGHT="720"
+MAX_HEIGHT="480"
 
 # compatible = intenta mp4/m4a primero
 # flexible   = permite más formatos si mp4 no está disponible
@@ -118,3 +118,11 @@ KDECONNECT_DEVICE=""
 TUTIVI_API_HOST="0.0.0.0"
 TUTIVI_API_PORT="8765"
 TUTIVI_API_TOKEN=""
+
+# ------------------------------------------------------------
+# Debug / diagnóstico temporal
+# ------------------------------------------------------------
+
+TUTIVI_DEBUG_WINDOW="yes"
+TUTIVI_DEBUG_WINDOW_TIME="30"
+TUTIVI_LOG_FILE="$HOME/.cache/tutivi/logs/mpv.log"
