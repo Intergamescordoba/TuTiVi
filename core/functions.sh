@@ -191,9 +191,35 @@ _tutivi_parse_url() {
 #  Iniciar mpv
 # ══════════════════════════════════════════════════════════════
 
+_tutivi_build_format() {
+    case "$TUTIVI_FORMAT_MODE" in
+        compatible)
+            YTDL_FORMAT="bestvideo[height<=${MAX_HEIGHT}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${MAX_HEIGHT}]"
+            ;;
+
+        flexible)
+            YTDL_FORMAT="bestvideo[height<=${MAX_HEIGHT}]+bestaudio/best[height<=${MAX_HEIGHT}]"
+            ;;
+
+        best)
+            YTDL_FORMAT="bestvideo[height<=${MAX_HEIGHT}]+bestaudio/best"
+            ;;
+
+        ultralite)
+            YTDL_FORMAT="bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]"
+            ;;
+
+        *)
+            YTDL_FORMAT="bestvideo[height<=${MAX_HEIGHT}][ext=mp4]+bestaudio[ext=m4a]/best[height<=${MAX_HEIGHT}]"
+            ;;
+    esac
+}
+
 _tutivi_start_mpv() {
 
     local URL="$1"
+
+    _tutivi_build_format
 
     rm -f "$MPV_SOCKET"
 if [[ -f "$MPRIS_SCRIPT" ]]; then
@@ -205,13 +231,13 @@ fi
 
     DISPLAY="$DISPLAY_ID" mpv --no-config --fs \
         --input-ipc-server="$MPV_SOCKET" \
-        --script=/usr/lib/mpv-mpris/mpris.so \
+        $MPRIS_OPTION \
         --osd-playing-msg-duration=5000 \
         --osd-font-size=40 \
         --osd-align-x=center \
         --osd-align-y=bottom \
         --osd-margin-y=80 \
-        --ytdl-format="bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]" \
+        --ytdl-format="$YTDL_FORMAT" \
         "$URL" >/dev/null 2>&1 &
 }
 
