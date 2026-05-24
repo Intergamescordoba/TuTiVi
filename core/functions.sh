@@ -55,6 +55,15 @@ TUTIVI_DEBUG_WINDOW_TIME="${TUTIVI_DEBUG_WINDOW_TIME:-30}"
 
 TUTIVI_LOG_FILE="${TUTIVI_LOG_FILE:-$HOME/.cache/tutivi/logs/mpv.log}"
 
+TUTIVI_DEBUG_PID_FILE="${TUTIVI_DEBUG_PID_FILE:-/tmp/tutivi-debug-window.pid}"
+# ══════════════════════════════════════════════════════════════
+#  Deno / JS runtime para yt-dlp
+#  Necesario para resolver retos JavaScript de YouTube
+# ══════════════════════════════════════════════════════════════
+
+export DENO_INSTALL="${DENO_INSTALL:-$HOME/.deno}"
+export PATH="$HOME/.local/bin:$DENO_INSTALL/bin:$PATH"
+
 # ══════════════════════════════════════════════════════════════
 #  Comprobacion de arranque limpio en MPV 
 # ══════════════════════════════════════════════════════════════
@@ -73,7 +82,7 @@ _tutivi_current_path() {
     [[ ! -S "$MPV_SOCKET" ]] && return 1
 
     echo '{"command":["get_property","path"]}' \
-        | socat - "$MPV_SOCKET" \
+        | socat - "$MPV_SOCKET" 2>/dev/null \
         | python3 -c '
 import sys, json
 try:
@@ -97,7 +106,7 @@ _tutivi_has_media() {
 # ══════════════════════════════════════════════════════════════
 
 _tutivi_cmd() {
-    echo "$1" | socat - "$MPV_SOCKET"
+    echo "$1" | socat - "$MPV_SOCKET" 2>/dev/null
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -192,7 +201,6 @@ _tutivi_parse_url() {
 
     fi
 }
-
 # ══════════════════════════════════════════════════════════════
 #  TuTiVi Debug Window
 # ══════════════════════════════════════════════════════════════
@@ -204,6 +212,18 @@ _tutivi_debug_window() {
     command -v xterm >/dev/null 2>&1 || return 0
 
     mkdir -p "$(dirname "$TUTIVI_LOG_FILE")"
+
+    # Si ya hay una ventana debug viva, no abrir otra
+    if [[ -f "$TUTIVI_DEBUG_PID_FILE" ]]; then
+        local OLD_PID
+        OLD_PID="$(cat "$TUTIVI_DEBUG_PID_FILE" 2>/dev/null)"
+
+        if [[ -n "$OLD_PID" ]] && kill -0 "$OLD_PID" 2>/dev/null; then
+            return 0
+        else
+            rm -f "$TUTIVI_DEBUG_PID_FILE"
+        fi
+    fi
 
     DISPLAY="$DISPLAY_ID" xterm \
         -T "TuTiVi Debug" \
@@ -217,12 +237,18 @@ _tutivi_debug_window() {
             echo ' TuTiVi Debug by Intergames'
             echo '════════════════════════════════════════════════════'
             echo
-            echo 'URL recibida / salida de mpv y yt-dlp:'
+            echo 'Mostrando salida de mpv / yt-dlp...'
+            echo 'Esta ventana permanecerá abierta.'
             echo
-            timeout ${TUTIVI_DEBUG_WINDOW_TIME}s tail -n +1 -f '$TUTIVI_LOG_FILE'
+            echo 'Si mandas otro video, se reutiliza esta misma ventana.'
+            echo
+            echo '════════════════════════════════════════════════════'
+            echo
+            tail -n +1 -f '$TUTIVI_LOG_FILE'
         " &
-}
 
+    echo "$!" > "$TUTIVI_DEBUG_PID_FILE"
+}
 # ══════════════════════════════════════════════════════════════
 #  Configuración de formato de yt-dlp según el modo seleccionado
 # ══════════════════════════════════════════════════════════════
@@ -273,12 +299,14 @@ _tutivi_start_mpv() {
 
     {
         echo "════════════════════════════════════════════════════"
-        echo "TuTiVi Debug"
+        echo "TuTiVi Modo Desarrollo en curso"
         echo "Fecha: $(date '+%F %T')"
         echo "URL: $URL"
         echo "Formato: $YTDL_FORMAT"
         echo "Display: $DISPLAY_ID"
         echo "Socket: $MPV_SOCKET"
+        echo "Volumen inicial: $TUTIVI_INITIAL_VOLUME"
+        echo "Debug window: $TUTIVI_DEBUG_WINDOW"
         echo "════════════════════════════════════════════════════"
         echo
     } >> "$TUTIVI_LOG_FILE"

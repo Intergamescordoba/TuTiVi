@@ -126,3 +126,10 @@ TUTIVI_API_TOKEN=""
 TUTIVI_DEBUG_WINDOW="yes"
 TUTIVI_DEBUG_WINDOW_TIME="30"
 TUTIVI_LOG_FILE="$HOME/.cache/tutivi/logs/mpv.log"
+
+# ------------------------------------------------------------
+# Deno / JavaScript runtime para yt-dlp
+# ------------------------------------------------------------
+
+TUTIVI_REQUIRE_DENO="yes"
+DENO_INSTALL="$HOME/.deno"
