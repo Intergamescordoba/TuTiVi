@@ -6,14 +6,14 @@
 
 echo ""
 echo "═══════════════════════════════════════════════"
-echo "           TuTiVi V 0.02 Installer"
+echo "           TuTiVi V1.0507 Installer"
 echo "                By Arturo B                    "
 echo "═══════════════════════════════════════════════"
 echo ""
 
 INSTALL_DIR="$HOME/.config/tutivi"
 
-echo "[1/7] Verificando dependencias..."
+echo "[1/9] Verificando dependencias..."
 
 REQUIRED_PACKAGES=(
     mpv
@@ -24,6 +24,8 @@ REQUIRED_PACKAGES=(
     kdeconnect
     ffmpeg
     mpv-mpris
+    xdg-utils
+    desktop-file-utils
 )
 
 for pkg in "${REQUIRED_PACKAGES[@]}"; do
@@ -33,7 +35,7 @@ for pkg in "${REQUIRED_PACKAGES[@]}"; do
     fi
 done
 
-echo "[2.1/7] Instalando/actualizando yt-dlp..."
+echo "[2/9] Instalando/actualizando yt-dlp..."
 
 mkdir -p "$HOME/.local/bin"
 
@@ -55,7 +57,7 @@ if ! command -v yt-dlp >/dev/null 2>&1; then
     echo 'export PATH="$HOME/.local/bin:$PATH"'
 fi
 
-echo "[2.2/7]Instalando/verificando Deno para yt-dlp..."
+echo "[3/9]Instalando/verificando Deno para yt-dlp..."
 
 if command -v deno >/dev/null 2>&1; then
     echo "Deno ya está instalado: $(deno --version | head -1)"
@@ -83,16 +85,18 @@ if ! grep -q 'DENO_INSTALL="$HOME/.deno"' "$HOME/.bashrc"; then
     } >> "$HOME/.bashrc"
 fi
 
-echo "[3/7] Creando directorios..."
+echo "[4/9] Creando directorios y archivos necesarios..."
 
 mkdir -p "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR/history"
 mkdir -p "$INSTALL_DIR/downloads"
 mkdir -p "$INSTALL_DIR/logs"
 mkdir -p "$INSTALL_DIR/mpv"
+mkdir -p "$INSTALL_DIR/backup"
 mkdir -p "$HOME/.cache/tutivi/logs"
+mkdir -p "$HOME/.local/share/applications"
 
-echo "[4/7] Verificando si existe configuración previa..."
+echo "[5/9] Verificando si existe configuración previa..."
 
 if [[ ! -f "$INSTALL_DIR/tutivi.conf" ]]; then
     cp config/tutivi.conf.example "$INSTALL_DIR/tutivi.conf"
@@ -100,16 +104,16 @@ else
     echo "Configuración existente detectada, no se sobrescribe tutivi.conf"
 fi
 
-echo "[5/7] Copiando configuración mpv..."
+echo "[6/9] Copiando configuración mpv..."
 
 cp mpv/mpv.conf \
     "$INSTALL_DIR/mpv/mpv.conf"
 
-echo "[6/7] Instalando core..."
+echo "[7/9] Instalando core..."
 
 cp -r core "$INSTALL_DIR/"
 
-echo "[7/7] Instalando comando global..."
+echo "[8/9] Instalando comando global..."
 
 sudo ln -sf "$(pwd)/tutivi" /usr/local/bin/tutivi
 sudo ln -sf "$(pwd)/handlers/tutivi-handler" /usr/local/bin/tutivi-handler
@@ -121,6 +125,47 @@ chmod +x handlers/tutivi-handler
 chmod +x handlers/abrir-tutivi
 chmod +x core/functions.sh
 
+echo "[9/9] Activando Modo Sayayin..."
+
+SAYAYIN_DESKTOP_SRC="desktop/tutivi-handler.desktop"
+SAYAYIN_DESKTOP_DEST="$HOME/.local/share/applications/tutivi-handler.desktop"
+
+mkdir -p "$HOME/.local/share/applications"
+mkdir -p "$INSTALL_DIR/backup"
+
+# Guardar backup completo de mimeapps.list solo la primera vez
+if [[ -f "$HOME/.config/mimeapps.list" && ! -f "$INSTALL_DIR/backup/mimeapps.list.before-sayayin" ]]; then
+    cp "$HOME/.config/mimeapps.list" "$INSTALL_DIR/backup/mimeapps.list.before-sayayin"
+fi
+
+# Guardar manejadores actuales solo la primera vez
+if [[ ! -f "$INSTALL_DIR/backup/http-handler.before-sayayin" ]]; then
+    xdg-mime query default x-scheme-handler/http > "$INSTALL_DIR/backup/http-handler.before-sayayin" 2>/dev/null || true
+fi
+
+if [[ ! -f "$INSTALL_DIR/backup/https-handler.before-sayayin" ]]; then
+    xdg-mime query default x-scheme-handler/https > "$INSTALL_DIR/backup/https-handler.before-sayayin" 2>/dev/null || true
+fi
+
+# Copiar archivo desktop de TuTiVi
+if [[ -f "$SAYAYIN_DESKTOP_SRC" ]]; then
+    cp "$SAYAYIN_DESKTOP_SRC" "$SAYAYIN_DESKTOP_DEST"
+else
+    echo "ERROR: No existe $SAYAYIN_DESKTOP_SRC"
+    echo "No se pudo activar Modo Sayayin."
+    exit 1
+fi
+
+update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+
+# Activar TuTiVi como manejador de enlaces web
+xdg-mime default tutivi-handler.desktop x-scheme-handler/http
+xdg-mime default tutivi-handler.desktop x-scheme-handler/https
+
+echo "Modo Sayayin activado."
+echo "HTTP : $(xdg-mime query default x-scheme-handler/http)"
+echo "HTTPS: $(xdg-mime query default x-scheme-handler/https)"
+
 echo ""
 echo "✅ TuTiVi instalado correctamente."
 echo ""
@@ -128,4 +173,4 @@ echo "Usa por ejemplo:"
 echo ""
 echo "   tutivi reproducir https://www.youtube.com/watch?v=7QU1nvuxaMA"
 echo ""
-echo "        Desarrollado por Intergames Còrdoba v.0.02"
+echo "        Desarrollado por Intergames Còrdoba V1.0507"

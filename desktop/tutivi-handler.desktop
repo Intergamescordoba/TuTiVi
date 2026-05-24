@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=TuTiVi
+Comment=Abrir enlaces web con TuTiVi
+Exec=/usr/local/bin/tutivi-handler %u
+Terminal=false
+Type=Application
+Categories=AudioVideo;Player;
+MimeType=x-scheme-handler/http;x-scheme-handler/https;
+NoDisplay=false

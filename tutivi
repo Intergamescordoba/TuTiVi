@@ -28,6 +28,9 @@ _show_help() {
     echo "    tutivi actual            Muestra información actual"
     echo "    tutivi titulo            Muestra título en pantalla"
     echo "    tutivi estado            Estado del reproductor"
+    echo "    tutivi modo_sayayin on      Activa captura de enlaces HTTP/HTTPS"
+    echo "    tutivi modo_sayayin off     Restaura configuración anterior"
+    echo "    tutivi modo_sayayin estado  Muestra configuración actual"
     echo ""
     echo ""    
     echo ""
@@ -278,6 +281,25 @@ case "$COMMAND" in
         _tutivi_title_osd
         ;;
 
+    modo_sayayin|sayayin)
+        case "$1" in
+            on)
+                _tutivi_sayayin_on
+                ;;
+            off)
+                _tutivi_sayayin_off
+                ;;
+            estado)
+                _tutivi_sayayin_status
+                ;;
+            *)
+                echo "Uso:"
+                echo "  tutivi modo_sayayin on"
+                echo "  tutivi modo_sayayin off"
+                echo "  tutivi modo_sayayin estado"
+                ;;
+        esac
+        ;;
     *)
         _show_help
         ;;

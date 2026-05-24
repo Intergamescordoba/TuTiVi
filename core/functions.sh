@@ -426,3 +426,159 @@ except Exception:
         _tutivi_osd "TuTiVi Player - Sin título" 5000
     fi
 }
+# ══════════════════════════════════════════════════════════════
+#  Modo Sayayin - HTTP/HTTPS handler
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_restore_handler_or_fallback() {
+
+    local SCHEME="$1"
+    local BACKUP_FILE="$2"
+    local OLD_HANDLER=""
+
+    OLD_HANDLER="$(cat "$BACKUP_FILE" 2>/dev/null)"
+
+    if [[ -n "$OLD_HANDLER" && "$OLD_HANDLER" != "tutivi-handler.desktop" ]]; then
+        xdg-mime default "$OLD_HANDLER" "x-scheme-handler/$SCHEME"
+        return 0
+    fi
+
+    for candidate in \
+        google-chrome.desktop \
+        com.google.Chrome.desktop \
+        firefox.desktop \
+        chromium.desktop \
+        chromium-browser.desktop \
+        brave-browser.desktop
+    do
+        if [[ -f "$HOME/.local/share/applications/$candidate" || -f "/usr/share/applications/$candidate" ]]; then
+            xdg-mime default "$candidate" "x-scheme-handler/$SCHEME"
+            return 0
+        fi
+    done
+
+    echo "[AVISO] No se encontró navegador para restaurar $SCHEME."
+    return 1
+}
+
+
+_tutivi_sayayin_backup_current() {
+
+    local BACKUP_DIR="$HOME/.config/tutivi/backup"
+    local CURRENT_HTTP=""
+    local CURRENT_HTTPS=""
+
+    mkdir -p "$BACKUP_DIR"
+
+    if [[ -f "$HOME/.config/mimeapps.list" && ! -f "$BACKUP_DIR/mimeapps.list.before-sayayin" ]]; then
+        cp "$HOME/.config/mimeapps.list" "$BACKUP_DIR/mimeapps.list.before-sayayin"
+    fi
+
+    CURRENT_HTTP="$(xdg-mime query default x-scheme-handler/http 2>/dev/null || true)"
+    CURRENT_HTTPS="$(xdg-mime query default x-scheme-handler/https 2>/dev/null || true)"
+
+    if [[ ! -f "$BACKUP_DIR/http-handler.before-sayayin" ]]; then
+        if [[ "$CURRENT_HTTP" != "tutivi-handler.desktop" ]]; then
+            echo "$CURRENT_HTTP" > "$BACKUP_DIR/http-handler.before-sayayin"
+        else
+            : > "$BACKUP_DIR/http-handler.before-sayayin"
+        fi
+    fi
+
+    if [[ ! -f "$BACKUP_DIR/https-handler.before-sayayin" ]]; then
+        if [[ "$CURRENT_HTTPS" != "tutivi-handler.desktop" ]]; then
+            echo "$CURRENT_HTTPS" > "$BACKUP_DIR/https-handler.before-sayayin"
+        else
+            : > "$BACKUP_DIR/https-handler.before-sayayin"
+        fi
+    fi
+}
+
+
+_tutivi_sayayin_on() {
+
+    local DESKTOP_SRC_INSTALLED="$HOME/.config/tutivi/desktop/tutivi-handler.desktop"
+    local DESKTOP_SRC_PROJECT="$HOME/TuTiVi/desktop/tutivi-handler.desktop"
+    local DESKTOP_DEST="$HOME/.local/share/applications/tutivi-handler.desktop"
+
+    mkdir -p "$HOME/.local/share/applications"
+
+    _tutivi_sayayin_backup_current
+
+    if [[ -f "$DESKTOP_SRC_INSTALLED" ]]; then
+        cp "$DESKTOP_SRC_INSTALLED" "$DESKTOP_DEST"
+    elif [[ -f "$DESKTOP_SRC_PROJECT" ]]; then
+        cp "$DESKTOP_SRC_PROJECT" "$DESKTOP_DEST"
+    else
+        echo "[ERROR] No se encontró tutivi-handler.desktop"
+        return 1
+    fi
+
+    update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+
+    xdg-mime default tutivi-handler.desktop x-scheme-handler/http
+    xdg-mime default tutivi-handler.desktop x-scheme-handler/https
+
+    echo "Modo Sayayin activado."
+    echo "HTTP : $(xdg-mime query default x-scheme-handler/http)"
+    echo "HTTPS: $(xdg-mime query default x-scheme-handler/https)"
+}
+
+
+_tutivi_sayayin_off() {
+
+    local BACKUP_DIR="$HOME/.config/tutivi/backup"
+
+    _tutivi_restore_handler_or_fallback "http" "$BACKUP_DIR/http-handler.before-sayayin"
+    _tutivi_restore_handler_or_fallback "https" "$BACKUP_DIR/https-handler.before-sayayin"
+
+    echo "Modo Sayayin desactivado."
+    echo "HTTP : $(xdg-mime query default x-scheme-handler/http)"
+    echo "HTTPS: $(xdg-mime query default x-scheme-handler/https)"
+}
+
+
+_tutivi_sayayin_status() {
+
+    local HTTP_HANDLER=""
+    local HTTPS_HANDLER=""
+
+    HTTP_HANDLER="$(xdg-mime query default x-scheme-handler/http 2>/dev/null)"
+    HTTPS_HANDLER="$(xdg-mime query default x-scheme-handler/https 2>/dev/null)"
+
+    echo ""
+    echo "═══════════════════════════════════════════════"
+    echo "        Estado del Modo Sayayin"
+    echo "═══════════════════════════════════════════════"
+    echo ""
+
+    echo "HTTP : ${HTTP_HANDLER:-sin configurar}"
+    echo "HTTPS: ${HTTPS_HANDLER:-sin configurar}"
+    echo ""
+
+    if [[ "$HTTP_HANDLER" == "tutivi-handler.desktop" && "$HTTPS_HANDLER" == "tutivi-handler.desktop" ]]; then
+        echo "✅ Modo Sayayin ACTIVADO"
+        echo ""
+        echo "TuTiVi está configurado para recibir enlaces HTTP/HTTPS."
+        echo "Los enlaces enviados por xdg-open, KDE Connect o el sistema"
+        echo "deberían abrirse con TuTiVi."
+    else
+        echo "⚠️ Modo Sayayin DESACTIVADO o incompleto"
+        echo ""
+        echo "Actualmente los enlaces web no están completamente asociados a TuTiVi."
+
+        if [[ "$HTTP_HANDLER" != "tutivi-handler.desktop" ]]; then
+            echo "HTTP no apunta a TuTiVi."
+        fi
+
+        if [[ "$HTTPS_HANDLER" != "tutivi-handler.desktop" ]]; then
+            echo "HTTPS no apunta a TuTiVi."
+        fi
+
+        echo ""
+        echo "Para activarlo:"
+        echo "  tutivi modo_sayayin on"
+    fi
+
+    echo ""
+}
