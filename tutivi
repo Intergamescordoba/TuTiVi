@@ -53,6 +53,8 @@ _tutivi_play() {
 
     _tutivi_start_mpv "$URL"
 
+    _tutivi_title_watch
+
     sleep 2
 
     VIDEO_TITLE=""
@@ -121,7 +123,9 @@ _tutivi_add() {
     _tutivi_cmd \
         '{"command":["loadfile","'"$URL"'","append-play"]}' >/dev/null
 
-    _tutivi_osd "TuTiVi - Video agregado a la cola" 3000
+    _tutivi_title_watch
+
+    _tutivi_osd "✔ Nuevo Video Agregado a la cola..." 5000
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -131,6 +135,7 @@ _tutivi_add() {
 _tutivi_stop() {
 
     local MPV_PID=""
+    local WATCH_PID=""
 
     # Intentar obtener PID desde socket
     if _tutivi_socket_alive; then
@@ -151,6 +156,13 @@ except Exception:
     fi
 
     rm -f "$MPV_SOCKET"
+
+    if [[ -f "$TUTIVI_TITLE_WATCH_PID_FILE" ]]; then
+        WATCH_PID="$(cat "$TUTIVI_TITLE_WATCH_PID_FILE" 2>/dev/null)"
+        [[ -n "$WATCH_PID" ]] && kill "$WATCH_PID" 2>/dev/null
+        rm -f "$TUTIVI_TITLE_WATCH_PID_FILE"
+    fi
+
 
     # Si tenemos PID, forzar cierre si sigue vivo
     if [[ -n "$MPV_PID" ]] && kill -0 "$MPV_PID" 2>/dev/null; then

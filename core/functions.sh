@@ -56,6 +56,13 @@ TUTIVI_DEBUG_WINDOW_TIME="${TUTIVI_DEBUG_WINDOW_TIME:-30}"
 TUTIVI_LOG_FILE="${TUTIVI_LOG_FILE:-$HOME/.cache/tutivi/logs/mpv.log}"
 
 TUTIVI_DEBUG_PID_FILE="${TUTIVI_DEBUG_PID_FILE:-/tmp/tutivi-debug-window.pid}"
+
+TUTIVI_TITLE_WATCH_INTERVAL="${TUTIVI_TITLE_WATCH_INTERVAL:-3}"
+
+TUTIVI_TITLE_WATCH_DELAY="${TUTIVI_TITLE_WATCH_DELAY:-4}"
+
+TUTIVI_TITLE_WATCH_PID_FILE="${TUTIVI_TITLE_WATCH_PID_FILE:-/tmp/tutivi-title-watch.pid}"
+
 # ══════════════════════════════════════════════════════════════
 #  Deno / JS runtime para yt-dlp
 #  Necesario para resolver retos JavaScript de YouTube
@@ -153,6 +160,67 @@ except Exception:
 PY
 }
 
+# ══════════════════════════════════════════════════════════════
+#  Mostrar título del video en OSD mientras se reproduce
+#  Se ejecuta en un proceso aparte que monitorea cambios en el video
+# ══════════════════════════════════════════════════════════════
+
+_tutivi_title_watch() {
+
+    # Si ya hay watcher vivo, no iniciar otro
+    if [[ -f "$TUTIVI_TITLE_WATCH_PID_FILE" ]]; then
+        local OLD_PID
+        OLD_PID="$(cat "$TUTIVI_TITLE_WATCH_PID_FILE" 2>/dev/null)"
+
+        if [[ -n "$OLD_PID" ]] && kill -0 "$OLD_PID" 2>/dev/null; then
+            return 0
+        else
+            rm -f "$TUTIVI_TITLE_WATCH_PID_FILE"
+        fi
+    fi
+
+    (
+        local LAST_PATH=""
+        local CURRENT_PATH=""
+        local WAIT_COUNT=0
+
+        # Esperar a que el socket de mpv esté listo
+        while ! _tutivi_socket_alive; do
+            sleep 1
+            WAIT_COUNT=$((WAIT_COUNT + 1))
+
+            # Si después de 20 segundos no hay socket, salir
+            if [[ "$WAIT_COUNT" -ge 20 ]]; then
+                rm -f "$TUTIVI_TITLE_WATCH_PID_FILE"
+                exit 0
+            fi
+        done
+
+        while _tutivi_socket_alive; do
+
+            CURRENT_PATH="$(_tutivi_current_path)"
+
+            if [[ -n "$CURRENT_PATH" \
+               && "$CURRENT_PATH" != "?" \
+               && "$CURRENT_PATH" != "null" \
+               && "$CURRENT_PATH" != "$LAST_PATH" ]]; then
+
+                LAST_PATH="$CURRENT_PATH"
+
+                sleep "$TUTIVI_TITLE_WATCH_DELAY"
+
+                _tutivi_title_osd
+            fi
+
+            sleep "$TUTIVI_TITLE_WATCH_INTERVAL"
+        done
+
+        rm -f "$TUTIVI_TITLE_WATCH_PID_FILE"
+
+    ) &
+
+    echo "$!" > "$TUTIVI_TITLE_WATCH_PID_FILE"
+}
 # ══════════════════════════════════════════════════════════════
 #  Notificación KDE Connect
 # ══════════════════════════════════════════════════════════════
